@@ -1,4 +1,7 @@
 require 'csv'
+require 'metrics_manager'
+require 'indicators_manager'
+require 'trader'
 
 module BtcTrader
   class HistoricalRecord
@@ -28,13 +31,17 @@ module BtcTrader
   class Engine
     def initialize(data)
       @data = HistoricalData.new
+      @metrics = MetricsManager.new
+      @indicators = IndicatorsManager.new
+      @trader = Trader.new @indicators
       parse_historical_data(data)
     end
     
     def run
       @data.each do |rec|
-        puts "Current price: #{rec.price}, Time: #{rec.time}"
-        break
+        @metrics.update! rec
+        @indicators.update! rec
+        @trader.execute! rec
       end
     end
     
