@@ -1,4 +1,4 @@
-$LOAD_PATH << File.join(File.dirname(__FILE__), '..', '..', '/lib')
+$LOAD_PATH << File.join(File.dirname(__FILE__), '..', '..', 'lib')
 require 'rubygems'
 require 'minitest/autorun'
 require 'btc_trader/indicators_manager'
@@ -14,6 +14,7 @@ class SimpleMovingAverageTest < MiniTest::Unit::TestCase
     assert_equal 10, @sma.value
 
     assert_equal 8.8, @sma.update!(4)
+    assert_equal 8.8, @sma.value
   end
   
   def test_partial

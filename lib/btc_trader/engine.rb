@@ -1,7 +1,8 @@
 require 'csv'
-require 'metrics_manager'
-require 'indicators_manager'
-require 'trader'
+require 'btc_trader/metrics_manager'
+require 'btc_trader/indicators_manager'
+require 'btc_trader/trader'
+require 'btc_trader/strategies/simple_sma_trader'
 
 module BtcTrader
   class HistoricalRecord
@@ -15,46 +16,35 @@ module BtcTrader
   end
   
   class HistoricalData
-    def initialize
-      @data = []
+    def initialize(file)
+      @file = file
     end
-    
-    def push(record)
-      @data << record
-    end
-    
+        
     def each
-      @data.each {|rec| yield rec }
+      cutoff = DateTime.parse('2010-11-1')
+      CSV.foreach(@file) do |row|
+        rec = HistoricalRecord.new( :price => row[1].to_f, 
+          :volume => row[2].to_f, :time => DateTime.strptime(row[0], '%s') )
+        next if rec.time < cutoff
+        yield rec
+      end
     end
   end
 
   class Engine
+    attr_reader :trader
+    
     def initialize(data)
-      @data = HistoricalData.new
-      @metrics = MetricsManager.new
-      @indicators = IndicatorsManager.new
-      @trader = Trader.new @indicators
-      parse_historical_data(data)
+      @data = HistoricalData.new data
+      @trader = Strategies::SimpleSmaTrader.new 10_000
+#      @trader = Strategies::BuyAndHoldTrader.new 10_000
     end
     
     def run
       @data.each do |rec|
-        @metrics.update! rec
-        @indicators.update! rec
         @trader.execute! rec
       end
     end
     
-    private
-    
-    def parse_historical_data(data)
-      CSV.foreach(data) do |row|
-        @data.push HistoricalRecord.new( :price => row[1], :volume => row[2], :time => DateTime.strptime(row[0], '%s') )
-      end
-    end
-
   end
 end
-
-e = BtcTrader::Engine.new 'data/historical.csv'
-e.run
