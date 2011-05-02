@@ -27,7 +27,7 @@ module BtcTrader
     end
     
     def buy(amount)
-      raise "Order exceeds balance" if amount > @cash_balance
+      raise "Buy order exceeds balance" if amount > @cash_balance
       @cash_balance -= amount
       btc = amount / @price
       @btc_balance  += btc * TRADE_FEE_MULTIPLIER
@@ -36,6 +36,7 @@ module BtcTrader
     end
     
     def sell(amount)
+      raise "Sell order exceeds balance" if amount > @btc_balance
       @btc_balance  -= amount
       cash =  amount * @price
       @cash_balance += cash * TRADE_FEE_MULTIPLIER
@@ -56,7 +57,7 @@ module BtcTrader
     end
   end
   
-  # A trivial example that buys at the outset and hold until the end
+  # A trivial example that buys at the outset and holds until the end
   module Strategies
     class BuyAndHoldTrader < Trader
       def execute_strategy!
